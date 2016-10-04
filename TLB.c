@@ -15,18 +15,49 @@
 #include <malloc.h>
 #include <stdlib.h>
 #include <inttypes.h>
+#include <unistd.h>
 
-int  main()
+#define NUM_PAGES 10000
+#define PAGE_SIZE 4096
+#define PAD_SIZE 0
+#define ITERS 40000
+
+int  main(int argc, char **argv)
 {
 
 
 	int i,j,stride, elemXpage, padsize, pagesize;
 	uintptr_t *arr,*elem=NULL;
-	int arrsize, num_of_pages;
-	num_of_pages=3000; // set it to greater than number of L1 and L2 TLB entries 
-	pagesize=4096; // 4k size 
-	padsize=0; // experimental value 
+	int arrsize, num_of_pages, max_iters;
+	int opt;
+	static char usage[]="usage: %s [-n num_pages] [-s page_size] [-l num_iterations]\n";
+	num_of_pages=NUM_PAGES; // set it to greater than number of L1 and L2 TLB entries 
+	pagesize=PAGE_SIZE; // defaults to 4k size 
+	padsize=PAD_SIZE; // experimental value
+	max_iters=ITERS;
+	 
 	
+   	// over ride defaults 
+	while ((opt = getopt(argc, argv, "n:s:l:")) != -1) {
+		switch(opt) {
+			case 'n': 
+				num_of_pages =  strtol(optarg, (char **) NULL, 10);
+				break;
+			case 's':
+				pagesize = strtol(optarg, (char **)NULL, 10);
+				break;
+			case 'l':
+				max_iters = strtol(optarg, (char **)NULL, 10);
+				break;
+			case '?':
+				fprintf(stderr, usage, argv[0]);
+				exit(1);
+			default:
+				fprintf(stderr, usage, argv[0]);
+				exit(1);
+		}
+	}
+
 	arrsize=((pagesize*num_of_pages) + padsize)/sizeof(uintptr_t);
 
 	arr =(uint64_t *)  malloc(arrsize*sizeof(uintptr_t)); // create the array of integers
@@ -47,7 +78,7 @@ int  main()
 	}		
 	arr[arrsize-stride]=(uintptr_t ) NULL; //if last page, then there is no more pointer to store
    		
-	for(j=0;j<40000;j++)
+	for(j=0;j<max_iters;j++)
 	{
 		elem=(uintptr_t *)arr[0]; //initialize to point to first elem of array
 		while(elem!=NULL)// continue while not last line 
