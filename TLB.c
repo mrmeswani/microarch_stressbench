@@ -47,9 +47,6 @@ int  main()
 	}		
 	arr[arrsize-stride]=(uintptr_t ) NULL; //if last page, then there is no more pointer to store
    		
-	//printf("%p \n",(uintptr_t)(arr+0+stride));	
-	//printf("%p\n",(uintptr_t)arr[0]);
-	//for(j=0;j<400000;j++)
 	for(j=0;j<40000;j++)
 	{
 		elem=(uintptr_t *)arr[0]; //initialize to point to first elem of array
@@ -59,7 +56,7 @@ int  main()
 		}
 	}	
 
-	printf("\n\n # of iters = %d\n",(arrsize/stride)*j);
+	printf("\n\nExpected # of TLB misses = %d\n",(arrsize/stride)*j);
 
 	free(arr);
 	free(elem);
