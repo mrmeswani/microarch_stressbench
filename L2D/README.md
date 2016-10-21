@@ -14,5 +14,5 @@ make DEBUG=1 VERBOSE=1
 
 #**** Tests *** 
 
-# L1D  stress test
+# L2D  stress test
 ./bin/L2D

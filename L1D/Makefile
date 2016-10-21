@@ -2,7 +2,9 @@
 EXEC = L1D 
 LIBS = -lm
 CC = gcc
-CFLAGS = -O3 -g -Wall
++DEBUG = 0
++VERBOSE = 0
++CFLAGS = -O3 -g -Wall -DDEBUG=${DEBUG} -DVERBOSE=${VERBOSE}
 LDFLAGS=
 
 # DIRS

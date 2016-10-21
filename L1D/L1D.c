@@ -18,42 +18,35 @@
 #include <unistd.h>
 #include "defs.h"
 
-#define LineSize 64 // size of L1D cache line
-#define NUM_PAGES L1D*2 //set toi much greater than L1D size  
-#define PAGE_SIZE 4096
+#define LineSize 64 // cache linesize
+#define BUFFER_SIZE L1D*2 //set to much greater than L1D size  
 #define PAD_SIZE 0
-#define ITERS 40000
+#define ITERS 100000 
 
 int  main(int argc, char **argv)
 {
 
 
-	int i,j,stride, elemXpage, padsize, pagesize,linesize, elemXline;
+	int i,j,stride, padsize, linesize, elemXline;
 	uintptr_t *arr,*elem=NULL;
-	int arrsize, num_of_pages, max_iters;
+	int arrsize, buffer_size, iters;
 	int opt;
-	static char usage[]="usage: %s [-n num_pages] [-s page_size] [-l num_iterations]\n";
-	num_of_pages=NUM_PAGES; // set it to greater than number of L1 and L2 TLB entries 
-	pagesize=PAGE_SIZE; // defaults to 4k size 
+	static char usage[]="usage: %s [-s buffer_size] [-l cacheline_size] [-n num_iterations]\n";
+	buffer_size=BUFFER_SIZE; // set it to greater than size of L1D cache 
 	padsize=PAD_SIZE; // experimental value
-	max_iters=ITERS;
+	iters=ITERS;
     linesize=LineSize;
 
-	PRINT_DEBUG("Num pages is %d\n",num_of_pages);
-			 
    	// over ride defaults 
 	while ((opt = getopt(argc, argv, "n:s:l:z:")) != -1) {
 		switch(opt) {
-			case 'n': 
-				num_of_pages =  strtol(optarg, (char **) NULL, 10);
-				break;
 			case 's':
-				pagesize = strtol(optarg, (char **)NULL, 10);
+				buffer_size = strtol(optarg, (char **)NULL, 10);
+				break;
+			case 'n':
+				iters = strtol(optarg, (char **)NULL, 10);
 				break;
 			case 'l':
-				max_iters = strtol(optarg, (char **)NULL, 10);
-				break;
-			case 'z':
 				linesize = strtol(optarg, (char **)NULL, 10);
 				break;
 			case '?':
@@ -65,8 +58,10 @@ int  main(int argc, char **argv)
 		}
 	}
 
+	PRINT_DEBUG("buffer size is %d\n",buffer_size);
+
 	elemXline = linesize/sizeof(uintptr_t);	
-	arrsize=((pagesize*num_of_pages) + padsize)/sizeof(uintptr_t);
+	arrsize=((buffer_size) + padsize)/sizeof(uintptr_t);
 
 	arr =(uint64_t *)  malloc(arrsize*sizeof(uintptr_t)); // create the array of integers
 	if(arr==NULL)
@@ -75,18 +70,17 @@ int  main(int argc, char **argv)
 		exit(1);
 	}
 
-	elemXpage=pagesize/sizeof(void *); // num of elems in one page
 
 
-	/*** first elem of each linr stores the address of the first elemenet of 3rd cache line ***/
+	/*** first elem of each linr stores the address of the first elemet of 3rd cache line ***/
 	stride=elemXline*3;
 	for(i=0;i<(arrsize-stride);i+=stride)
 	{
 		arr[i] = (uintptr_t )&arr[i+stride];
 	}		
-	arr[arrsize-stride]=(uintptr_t ) NULL; //if last page, then there is no more pointer to store
+	arr[arrsize-stride]=(uintptr_t ) NULL; //if last cache line, then there is no more pointer to store
    		
-	for(j=0;j<max_iters;j++)
+	for(j=0;j<iters;j++)
 	{
 		elem=(uintptr_t *)arr[0]; //initialize to point to first elem of array
 		while(elem!=NULL)// continue while not last line 
@@ -95,7 +89,9 @@ int  main(int argc, char **argv)
 		}
 	}	
 
-	printf("\n\nExpected # of L1D misses = %d\n",(arrsize/stride)*j);
+
+	PRINT_INFO("Arr size is %d, stride is %d, num iterations %d \n",arrsize, stride, j);
+	printf("\nExpected # of L1D misses = %d\n",(arrsize/stride)*j);
 
 	free(arr);
 	free(elem);

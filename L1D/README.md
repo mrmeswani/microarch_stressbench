@@ -8,6 +8,10 @@ This repository hosts a suite of micro test program kernels that can stress indi
 make clean
 make 
 
+# Compile with DEBUG and/or VERBOSE outputs (turned off by default)
+make clean
+make DEBUG=1 VERBOSE=1
+
 #**** Tests *** 
 
 # L1D  stress test
