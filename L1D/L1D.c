@@ -16,9 +16,10 @@
 #include <stdlib.h>
 #include <inttypes.h>
 #include <unistd.h>
+#include "defs.h"
 
 #define LineSize 64 // size of L1D cache line
-#define NUM_PAGES 300 //set toi much greater than L1D size  
+#define NUM_PAGES L1D*2 //set toi much greater than L1D size  
 #define PAGE_SIZE 4096
 #define PAD_SIZE 0
 #define ITERS 40000
@@ -37,7 +38,9 @@ int  main(int argc, char **argv)
 	padsize=PAD_SIZE; // experimental value
 	max_iters=ITERS;
     linesize=LineSize;
-		 
+
+	PRINT_DEBUG("Num pages is %d\n",num_of_pages);
+			 
    	// over ride defaults 
 	while ((opt = getopt(argc, argv, "n:s:l:z:")) != -1) {
 		switch(opt) {
